@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pii-scrub | Enterprise Zero-Retention PII Redaction & Synthetic Engine</title>
+  <meta name="description" content="The standard in zero-retention streaming PII sanitization and schema-safe synthetic data for engineering teams, database restores, and LLM pipelines.">
+  
+  <!-- Plus Jakarta Sans & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#030407',
+              900: '#07090e',
+              850: '#0c0f17',
+              800: '#121622',
+              750: '#181e2e',
+            },
+            emerald: {
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+            },
+            titanium: {
+              100: '#f8fafc',
+              200: '#f1f5f9',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+            }
+          },
+          letterSpacing: {
+            tighter: '-0.04em',
+            tight: '-0.025em',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Ultra-luxury ambient background lighting */
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.18), transparent 70%);
+    }
+    .mesh-grid {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      mask-image: radial-gradient(ellipse 60% 50% at 50% 30%, black 70%, transparent 100%);
+    }
+    .luxury-card {
+      background: linear-gradient(180deg, rgba(18, 22, 34, 0.7) 0%, rgba(12, 15, 23, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+        0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+    .luxury-card:hover {
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: 
+        inset 0 1px 0 0 rgba(52, 211, 153, 0.2),
+        0 25px 50px -12px rgba(16, 185, 129, 0.12);
+    }
+    .titanium-gradient-text {
+      background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 60%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .emerald-gradient-text {
+      background: linear-gradient(135deg, #6ee7b7 0%, #10b981 50%, #047857 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .highlight-token {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      padding: 0 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    /* Animated flowing dashed lines */
+    @keyframes flowDashes {
+      to {
+        stroke-dashoffset: -40;
+      }
+    }
+    .flow-line {
+      stroke-dasharray: 6 6;
+      animation: flowDashes 1.5s linear infinite;
+    }
+    /* Smooth custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #07090e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e2538;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #10b981;
+    }
+  </style>
+</head>
+
+<body class="bg-obsidian-950 text-titanium-300 font-sans antialiased selection:bg-emerald-500/20 selection:text-emerald-300 min-h-screen relative overflow-x-hidden">
+
+  <!-- Layered Atmosphere -->
+  <div class="fixed inset-0 hero-glow pointer-events-none z-0"></div>
+  <div class="fixed inset-0 mesh-grid pointer-events-none z-0"></div>
+
+  <!-- Luxury Navigation Bar -->
+  <header class="sticky top-0 z-50 backdrop-blur-xl bg-obsidian-950/70 border-b border-white/[0.06] transition-all">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center space-x-3.5 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-b from-white/10 to-white/[0.02] border border-white/15 flex items-center justify-center shadow-inner group-hover:border-emerald-500/50 transition duration-300">
+          <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-base tracking-tight text-white font-mono">pii-scrub</span>
+            <span class="text-[10px] uppercase font-mono font-bold tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">v1.0 Pro</span>
+          </div>
+          <span class="text-[11px] text-titanium-500 tracking-wide font-mono">Zero-Retention Engine</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center space-x-9 text-xs uppercase tracking-wider font-semibold text-titanium-400">
+        <a href="#pipeline" class="hover:text-white transition duration-200">Pipeline Visual</a>
+        <a href="#studio" class="hover:text-white transition duration-200">Studio & Table Diff</a>
+        <a href="#coverage" class="hover:text-white transition duration-200">Coverage</a>
+        <a href="#architecture" class="hover:text-white transition duration-200">Architecture</a>
+        <a href="#faq" class="hover:text-white transition duration-200">FAQ</a>
+        <a href="#pricing" class="hover:text-white transition duration-200">Licensing</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-4">
+        <a href="https://github.com/jeremy-data876/pii-scrub" target="_blank" rel="noopener noreferrer" 
+           class="hidden sm:inline-flex items-center space-x-2 text-xs font-mono font-medium text-titanium-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] px-3.5 py-2 rounded-lg transition duration-200">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span>GitHub</span>
+        </a>
+        <a href="#pricing" 
+           class="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-obsidian-950 px-5 py-2.5 rounded-lg transition duration-200 shadow-lg shadow-emerald-500/20 active:scale-95">
+          <span>Get License</span>
+          <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10">
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-16 lg:pt-36 lg:pb-24 px-6 max-w-7xl mx-auto text-center">
+      
+      <!-- Luxury Shimmer Pill -->
+      <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-white/[0.06] via-white/[0.02] to-white/[0.06] border border-white/10 text-xs font-mono text-titanium-300 mb-10 shadow-2xl backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="text-emerald-400 font-semibold tracking-wide">SOC 2 / HIPAA READY</span>
+        <span class="text-titanium-500">•</span>
+        <span>Streaming In-Memory Engine</span>
+      </div>
+
+      <!-- Hero Headline with Titanium Metallic Gradient -->
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter leading-[1.08] max-w-5xl mx-auto">
+        <span class="titanium-gradient-text">Sanitize Production Dumps.</span> <br>
+        <span class="emerald-gradient-text">Preserve Relational Integrity.</span>
+      </h1>
+
+      <p class="mt-8 text-base sm:text-lg lg:text-xl text-titanium-400 max-w-2xl mx-auto font-normal leading-relaxed">
+        The high-throughput streaming redaction utility engineered for staging databases, data warehouses, and LLM fine-tuning pipelines. Zero disk persistence, zero network dependencies.
+      </p>
+
+      <!-- Primary Action Row -->
+      <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+        <a href="#pricing" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-obsidian-950 font-bold px-8 py-4 rounded-xl transition duration-200 shadow-xl shadow-emerald-500/25 active:scale-95 text-sm uppercase tracking-wider">
+          <i data-lucide="key" class="w-4 h-4 stroke-[2.5]"></i>
+          <span>Acquire License — $299/yr</span>
+        </a>
+        <a href="#pipeline" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-obsidian-850 hover:bg-obsidian-800 text-white font-medium px-8 py-4 rounded-xl border border-white/10 transition duration-200 text-sm">
+          <span>Explore Pipeline</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-titanium-500"></i>
+        </a>
+      </div>
+
+      <!-- VISUAL ASSET 4: Developer Ecosystem Wall (Monochrome Vector Logos) -->
+      <div class="mt-20 pt-10 border-t border-white/[0.06] max-w-5xl mx-auto">
+        <p class="text-[11px] font-mono uppercase tracking-widest text-titanium-500 text-center mb-8">
+          Engineered for Drop-In Compatibility with Production Data Stacks
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-60 hover:opacity-90 transition duration-300">
+          
+          <!-- PostgreSQL -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.2 16.2c-2.4 0-4-1.2-4.5-2.8l1.4-.7c.3 1 1.4 1.7 3.1 1.7 1.8 0 3-.9 3-2.2 0-1.2-.8-1.8-2.6-2.2l-1.3-.3c-2.1-.5-3.3-1.6-3.3-3.3 0-2 1.7-3.4 4.1-3.4 2 0 3.5.9 4.1 2.3l-1.4.7c-.3-.9-1.2-1.4-2.7-1.4-1.6 0-2.6.8-2.6 1.9 0 1 .7 1.6 2.3 2l1.3.3c2.4.6 3.7 1.7 3.7 3.6 0 2.3-1.8 3.7-4.6 3.7z"/>
+            </svg>
+            <span>PostgreSQL</span>
+          </div>
+
+          <!-- MySQL -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9zm4.2 13.8L12 14.5l-4.2 2.3 1.1-4.8-3.7-3.2 4.9-.4L12 3.8l1.9 4.6 4.9.4-3.7 3.2 1.1 4.8z"/>
+            </svg>
+            <span>MySQL</span>
+          </div>
+
+          <!-- Docker -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M13.98 10.02h2.27V7.75h-2.27v2.27zm-2.72 0h2.27V7.75h-2.27v2.27zm-2.73 0h2.27V7.75H8.53v2.27zm-2.72 0h2.27V7.75H5.81v2.27zm8.17-2.72h2.27V5.03h-2.27v2.27zm-2.72 0h2.27V5.03h-2.27v2.27zm-2.73 0h2.27V5.03H8.53v2.27zm10.89 4.99c-.38-.28-1.52-.77-2.72-.08-.43.25-.8.61-1.12 1.02-.32.41-.7.73-1.16.92-.72.3-1.63.26-2.52.26H3.61c-.55 0-1.07.22-1.46.61-.39.39-.61.91-.61 1.46 0 2.22.95 4.3 2.52 5.76C5.63 23.44 7.74 24 10.01 24c4.66 0 8.87-2.34 11.23-6.24.4-.66.52-1.46.32-2.22-.2-.76-.71-1.39-1.39-1.74l-.19-.11z"/>
+            </svg>
+            <span>Docker OCI</span>
+          </div>
+
+          <!-- Kubernetes -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M12 2L3.5 6.9v9.8L12 21.6l8.5-4.9V6.9L12 2zm6.5 13.7L12 19.4l-6.5-3.7V7.9L12 4.2l6.5 3.7v7.8z"/>
+            </svg>
+            <span>Kubernetes</span>
+          </div>
+
+          <!-- Snowflake -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M12 2v20m-7.07-2.93l14.14-14.14M2 12h20M4.93 4.93l14.14 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Snowflake CSV</span>
+          </div>
+
+          <!-- GitHub Actions -->
+          <div class="flex items-center space-x-2 text-titanium-300 font-mono text-xs font-semibold">
+            <svg class="w-6 h-6 fill-current text-titanium-400" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
+            </svg>
+            <span>GitHub CI/CD</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- VISUAL ASSET 1: The Pipeline Data-Flow Schematic (Architecture Visual) -->
+    <section id="pipeline" class="py-20 px-6 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold mb-4 border border-emerald-500/20">
+          <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+          STREAMING DATA PIPELINE SCHEMATIC
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          How Data Traverses the Sanitizer
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          Zero disk caching. Payloads stream across volatile RAM buffers, encrypting values via format-preserving hashes before writeout.
+        </p>
+      </div>
+
+      <!-- High-End Architecture Diagram Canvas -->
+      <div class="luxury-card rounded-3xl p-6 sm:p-12 relative overflow-hidden border border-white/10 shadow-2xl">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+          
+          <!-- Node 1: Production Database (Dirty Ingest) -->
+          <div class="lg:col-span-3 p-6 rounded-2xl bg-obsidian-900 border border-white/10 relative">
+            <div class="flex items-center justify-between mb-4">
+              <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 font-bold">Raw Prod Source</span>
+            </div>
+            <div class="flex items-center space-x-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                <i data-lucide="database" class="w-5 h-5 text-rose-400"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Production Database</h4>
+                <p class="text-[11px] font-mono text-titanium-500">pg_dump / mysqldump</p>
+              </div>
+            </div>
+            <div class="mt-4 p-3 rounded-lg bg-obsidian-950 font-mono text-[11px] text-rose-300/80 leading-relaxed space-y-1">
+              <div>• Real Customer SSNs</div>
+              <div>• Unmasked Credit Cards</div>
+              <div>• RFC Email Addresses</div>
+              <div>• Relational Foreign Keys</div>
+            </div>
+            <div class="mt-3 text-[10px] font-mono text-titanium-500 text-right">Stream: stdin (UNIX pipe)</div>
+          </div>
+
+          <!-- Connector 1 (Animated Flow Line) -->
+          <div class="hidden lg:flex lg:col-span-1 items-center justify-center">
+            <svg class="w-full h-8" viewBox="0 0 100 24" fill="none">
+              <path d="M0 12h100" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+              <path d="M0 12h100" class="flow-line" stroke="#10b981" stroke-width="2"/>
+              <polygon points="96,8 100,12 96,16" fill="#10b981"/>
+            </svg>
+          </div>
+
+          <!-- Node 2: Core pii-scrub In-Memory Engine (Highlighted Centerpiece) -->
+          <div class="lg:col-span-4 p-7 rounded-2xl bg-gradient-to-b from-obsidian-850 to-obsidian-900 border-2 border-emerald-500/60 relative shadow-2xl glow-border">
+            <div class="absolute -top-3.5 right-6 bg-emerald-500 text-obsidian-950 font-mono font-black text-[10px] uppercase tracking-widest px-3 py-0.5 rounded-full shadow">
+              Zero Disk Persistence
+            </div>
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                <i data-lucide="cpu" class="w-6 h-6 text-emerald-400"></i>
+              </div>
+              <div>
+                <h4 class="text-base font-extrabold text-white">pii-scrub Engine</h4>
+                <p class="text-[11px] font-mono text-emerald-400">RAM Streaming Filter (mlock)</p>
+              </div>
+            </div>
+
+            <!-- Internal Engine Stages -->
+            <div class="space-y-2.5 mt-5 font-mono text-xs">
+              <div class="p-2.5 rounded-lg bg-obsidian-950 border border-white/[0.06] flex items-center justify-between">
+                <span class="text-titanium-300">1. SIMD Regex Scanner</span>
+                <span class="text-emerald-400 text-[10px]">43k lines/sec</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-obsidian-950 border border-white/[0.06] flex items-center justify-between">
+                <span class="text-titanium-300">2. MOD-10 Luhn Algorithmic Gate</span>
+                <span class="text-emerald-400 text-[10px]">0 False Positives</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-obsidian-950 border border-white/[0.06] flex items-center justify-between">
+                <span class="text-titanium-300">3. Deterministic HMAC FPE Engine</span>
+                <span class="text-emerald-400 text-[10px]">Relational Key Match</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-obsidian-950 border border-white/[0.06] flex items-center justify-between">
+                <span class="text-titanium-300">4. Ed25519 Offline License Check</span>
+                <span class="text-emerald-400 text-[10px]">100% Air-Gapped</span>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-white/[0.06] text-[10px] font-mono text-titanium-400 text-center">
+              Kernel I/O Buffer: 64 KB • Zero Disk Writes
+            </div>
+          </div>
+
+          <!-- Connector 2 (Animated Flow Line) -->
+          <div class="hidden lg:flex lg:col-span-1 items-center justify-center">
+            <svg class="w-full h-8" viewBox="0 0 100 24" fill="none">
+              <path d="M0 12h100" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+              <path d="M0 12h100" class="flow-line" stroke="#10b981" stroke-width="2"/>
+              <polygon points="96,8 100,12 96,16" fill="#10b981"/>
+            </svg>
+          </div>
+
+          <!-- Node 3: Clean Staging / LLM Target -->
+          <div class="lg:col-span-3 p-6 rounded-2xl bg-obsidian-900 border border-emerald-500/30 relative">
+            <div class="flex items-center justify-between mb-4">
+              <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">Clean Staging</span>
+            </div>
+            <div class="flex items-center space-x-3 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <i data-lucide="server" class="w-5 h-5 text-emerald-400"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Staging DB & LLM Ingest</h4>
+                <p class="text-[11px] font-mono text-emerald-400">SOC 2 / HIPAA Compliant</p>
+              </div>
+            </div>
+            <div class="mt-4 p-3 rounded-lg bg-obsidian-950 font-mono text-[11px] text-emerald-300/80 leading-relaxed space-y-1">
+              <div>• Synthetic RFC Emails</div>
+              <div>• 4000-xxxx Non-Routable Cards</div>
+              <div>• 000-xx Non-Issued SSNs</div>
+              <div>• 100% Valid Foreign Keys</div>
+            </div>
+            <div class="mt-3 text-[10px] font-mono text-titanium-500 text-right">Stream: stdout (Clean SQL)</div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VISUAL ASSET 2: The Interactive Visual Database Table Diff -->
+    <section class="py-20 px-6 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] text-xs font-mono font-semibold text-titanium-300 mb-4 border border-white/10">
+          <i data-lucide="table" class="w-3.5 h-3.5 text-emerald-400"></i>
+          RELATIONAL DATABASE VISUAL DIFF
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          See the Staging Transformation
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          Toggle between raw production records and sanitized synthetic staging. Watch foreign key joins remain mathematically linked.
+        </p>
+
+        <!-- Table State Switcher -->
+        <div class="mt-8 inline-flex p-1 rounded-xl bg-obsidian-900 border border-white/10 shadow-lg">
+          <button onclick="setTableMode('raw')" id="btn-tbl-raw" class="px-5 py-2 rounded-lg text-xs font-mono font-bold transition text-titanium-400 hover:text-white">
+            Raw Dirty Production
+          </button>
+          <button onclick="setTableMode('synthetic')" id="btn-tbl-synthetic" class="px-5 py-2 rounded-lg text-xs font-mono font-bold transition bg-emerald-500 text-obsidian-950 shadow-md">
+            Sanitized Staging (pii-scrub Pro)
+          </button>
+        </div>
+      </div>
+
+      <!-- Visual Database Table Card -->
+      <div class="luxury-card rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        
+        <div class="bg-obsidian-900 px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
+            <span class="font-mono text-xs font-bold text-white tracking-wide">staging_cluster_replica • schema: public.customers</span>
+          </div>
+          <span id="tableStatusTag" class="text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded border border-emerald-500/20 font-bold">
+            Schema Validated • Foreign Keys Intact
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-xs">
+            <thead>
+              <tr class="bg-obsidian-950/80 border-b border-white/[0.06] text-titanium-400 uppercase text-[10px] tracking-wider">
+                <th class="p-4">ID</th>
+                <th class="p-4">Customer Name</th>
+                <th class="p-4">Email (Unique Constraint)</th>
+                <th class="p-4">Phone Number</th>
+                <th class="p-4">Card (Luhn Verified)</th>
+                <th class="p-4">Social Security (SSN)</th>
+                <th class="p-4">Relational Orders Linked</th>
+              </tr>
+            </thead>
+            <tbody id="interactiveTableBody" class="divide-y divide-white/[0.05] text-titanium-200">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bg-obsidian-900/60 px-6 py-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-titanium-400">
+          <span>Notice: Customer #101 receives the exact matching email hash in the linked <code class="text-white">orders</code> table.</span>
+          <span class="text-emerald-400 font-semibold">100% UNIQUE & FK Safe</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Database Recipe Tabs Section -->
+    <section id="quickstart" class="py-12 px-6 max-w-5xl mx-auto">
+      <div class="luxury-card rounded-2xl overflow-hidden shadow-2xl">
+        
+        <div class="bg-obsidian-900 px-6 py-3.5 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+            <span class="text-xs font-mono text-titanium-400 font-medium pl-3 border-l border-white/10">30-Second UNIX Pipe Recipes</span>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 bg-obsidian-950 p-1 rounded-lg border border-white/[0.06]">
+            <button onclick="switchRecipe('postgres')" id="tab-postgres" class="recipe-tab px-3 py-1 rounded text-xs font-mono font-semibold bg-white/10 text-white transition">
+              PostgreSQL
+            </button>
+            <button onclick="switchRecipe('mysql')" id="tab-mysql" class="recipe-tab px-3 py-1 rounded text-xs font-mono font-semibold text-titanium-400 hover:text-white transition">
+              MySQL / MariaDB
+            </button>
+            <button onclick="switchRecipe('llm')" id="tab-llm" class="recipe-tab px-3 py-1 rounded text-xs font-mono font-semibold text-titanium-400 hover:text-white transition">
+              LLM Fine-Tuning (.jsonl)
+            </button>
+            <button onclick="switchRecipe('csv')" id="tab-csv" class="recipe-tab px-3 py-1 rounded text-xs font-mono font-semibold text-titanium-400 hover:text-white transition">
+              Warehouse CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto bg-obsidian-950/80">
+          <div id="recipe-text" class="text-titanium-200">
+            <span class="text-titanium-500"># Stream PostgreSQL dump directly into sanitized staging SQL (Zero Disk Persistence)</span><br>
+            <span class="text-emerald-400">pg_dump -Fc prod_db | docker run -i --rm ghcr.io/jeremy-data876/pii-scrub:v1 --mode synthetic &gt; staging.sql</span>
+          </div>
+        </div>
+
+        <div class="px-6 py-3 bg-obsidian-900/60 border-t border-white/[0.06] flex items-center justify-between text-xs font-mono text-titanium-400">
+          <span class="text-[11px] text-titanium-500">Works with existing CI/CD runners, jump bastions, and cron workers</span>
+          <button onclick="copyRecipeCommand()" class="flex items-center gap-1.5 text-xs text-titanium-300 hover:text-white font-mono bg-white/[0.04] hover:bg-white/[0.08] px-3 py-1.5 rounded border border-white/10 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copyRecipeBtn">Copy Command</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Interactive Command Studio Section with Live Highlighted Tokens -->
+    <section id="studio" class="py-20 px-6 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold mb-4 border border-emerald-500/20">
+          <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+          DEVELOPER WORKSTATION PLAYGROUND
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          Inspect the Pipeline Live
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          Type or edit the stream below. Redaction, MOD-10 Luhn validation, and deterministic pseudonymization execute in real-time inside your browser's local sandbox.
+        </p>
+
+        <!-- Studio Presets -->
+        <div class="mt-8 flex flex-wrap justify-center gap-2.5">
+          <button onclick="loadPreset('sql')" id="preset-sql" class="preset-btn px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-white/10 text-white border border-white/20 transition shadow-inner">
+            Postgres Dump (Relational)
+          </button>
+          <button onclick="loadPreset('jsonl')" id="preset-jsonl" class="preset-btn px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-obsidian-850 hover:bg-obsidian-800 text-titanium-400 hover:text-white border border-white/10 transition">
+            LLM Fine-Tuning (.jsonl)
+          </button>
+          <button onclick="loadPreset('csv')" id="preset-csv" class="preset-btn px-4 py-2 rounded-lg text-xs font-mono font-semibold bg-obsidian-850 hover:bg-obsidian-800 text-titanium-400 hover:text-white border border-white/10 transition">
+            Warehouse CSV Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Workstation Split Screen -->
+      <div class="luxury-card rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+        
+        <div class="bg-obsidian-900/90 px-6 py-4 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <div class="flex space-x-1.5">
+              <div class="w-3 h-3 rounded-full bg-rose-500/70"></div>
+              <div class="w-3 h-3 rounded-full bg-amber-500/70"></div>
+              <div class="w-3 h-3 rounded-full bg-emerald-500/70"></div>
+            </div>
+            <span class="text-xs font-mono text-titanium-400 font-medium pl-3 border-l border-white/10">pii-scrub daemon active</span>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-md border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="speedStat">Latency: 0.28 ms</span>
+            </div>
+            <div class="hidden sm:flex items-center space-x-1 text-xs font-mono text-titanium-400 bg-white/[0.03] px-3 py-1 rounded-md border border-white/[0.06]">
+              <span>Disk I/O:</span>
+              <span class="text-white font-semibold">0 bytes</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
+          
+          <!-- Input Terminal -->
+          <div class="flex flex-col bg-obsidian-950/80">
+            <div class="px-5 py-3 bg-obsidian-900/50 border-b border-white/[0.06] flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-wider text-titanium-400 font-bold flex items-center gap-2">
+                <i data-lucide="arrow-down-right" class="w-3.5 h-3.5 text-rose-400"></i>
+                Standard In (Raw Production Stream)
+              </span>
+              <span class="text-[10px] font-mono text-titanium-500">Live Editable</span>
+            </div>
+            <textarea id="rawInput" oninput="runStudioScrub()" 
+                      class="w-full h-80 p-5 bg-transparent font-mono text-xs leading-relaxed text-titanium-200 resize-none focus:outline-none focus:ring-0 selection:bg-rose-500/20 selection:text-white"
+                      placeholder="Paste dirty production text, SQL, or JSONL..."></textarea>
+          </div>
+
+          <!-- Output Terminal -->
+          <div class="flex flex-col bg-obsidian-950/95">
+            <div class="px-5 py-3 bg-obsidian-900/50 border-b border-white/[0.06] flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                Standard Out (Schema-Safe Stream)
+              </span>
+              <button onclick="copyStudioOutput()" class="flex items-center gap-1.5 text-[11px] font-mono text-titanium-400 hover:text-white transition">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span id="copyStudioText">Copy Clean Stream</span>
+              </button>
+            </div>
+            <div id="sanitizedOutput" 
+                 class="w-full h-80 p-5 font-mono text-xs leading-relaxed text-emerald-300/90 overflow-auto select-all selection:bg-emerald-500/20 whitespace-pre-wrap"></div>
+          </div>
+        </div>
+
+        <div class="px-6 py-3.5 bg-obsidian-900/60 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-titanium-400 gap-2">
+          <div class="flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+            <span>Relational join integrity preserved: identical raw values receive matching synthetic hashes across tables.</span>
+          </div>
+          <span class="text-[10px] text-titanium-500 uppercase tracking-widest font-bold">Hardware Accelerated SIMD</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supported Entity Coverage Matrix -->
+    <section id="coverage" class="py-20 px-6 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] text-xs font-mono font-semibold text-titanium-300 mb-4 border border-white/10">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+          ENTITY DETECTION MATRIX
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          Complete Regulatory Coverage
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          Pre-configured out of the box for PCI-DSS, HIPAA Safe Harbor, and GDPR Article 32 compliance.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Financial & PCI-DSS -->
+        <div class="luxury-card rounded-2xl p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <i data-lucide="credit-card" class="w-5 h-5 text-emerald-400"></i>
+            </div>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">PCI-DSS 4.0</span>
+          </div>
+          <h3 class="text-lg font-bold text-white tracking-tight">Payment & Banking</h3>
+          <p class="text-xs text-titanium-400 mt-2">Validated algorithmic detection with zero false positives on transaction IDs.</p>
+          <ul class="mt-6 space-y-2.5 text-xs font-mono text-titanium-300">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Visa, Mastercard, Amex, Discover</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> MOD-10 Luhn Algorithmic Gate</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> International IBAN & BIC Identifiers</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> ABA Routing & Transit Numbers</li>
+          </ul>
+        </div>
+
+        <!-- Card 2: Personal Identity & GDPR -->
+        <div class="luxury-card rounded-2xl p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <i data-lucide="user-check" class="w-5 h-5 text-emerald-400"></i>
+            </div>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">GDPR Art. 32</span>
+          </div>
+          <h3 class="text-lg font-bold text-white tracking-tight">Personal & Demographic</h3>
+          <p class="text-xs text-titanium-400 mt-2">Replaced with schema-safe synthetic tokens that preserve table equality joins.</p>
+          <ul class="mt-6 space-y-2.5 text-xs font-mono text-titanium-300">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> RFC 5322 Compliant Email Addresses</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> International & US Phone (E.164)</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> US Social Security Numbers (000-safe)</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> IP Addresses (IPv4 & IPv6 Subnets)</li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Healthcare & HIPAA -->
+        <div class="luxury-card rounded-2xl p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <i data-lucide="shield-alert" class="w-5 h-5 text-emerald-400"></i>
+            </div>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">HIPAA Safe Harbor</span>
+          </div>
+          <h3 class="text-lg font-bold text-white tracking-tight">Medical & Healthcare</h3>
+          <p class="text-xs text-titanium-400 mt-2">Satisfies Safe Harbor de-identification standards for clinical & staging data.</p>
+          <ul class="mt-6 space-y-2.5 text-xs font-mono text-titanium-300">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Medical Record Numbers (MRN)</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Health Plan Beneficiary Numbers</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Account & Transaction Identifiers</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Custom Regex Engine Extensions</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Architecture Bento Grid with Rich Micro-Visuals -->
+    <section id="architecture" class="py-20 px-6 max-w-7xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          Engineered for Zero Failure
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          Built to satisfy the strictest enterprise CISO audits without sacrificing developer ergonomics.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Bento 1: Zero Data Retention (With Visual Memory Buffer Diagram) -->
+        <div class="luxury-card rounded-2xl p-8 flex flex-col justify-between md:col-span-2">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
+                <i data-lucide="hard-drive" class="w-6 h-6 text-emerald-400"></i>
+              </div>
+              <!-- Visual Badge -->
+              <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 font-bold">
+                RAM Page-Locked Memory
+              </span>
+            </div>
+            <h3 class="text-xl font-bold text-white tracking-tight">Volatile Memory Streaming (ZDR)</h3>
+            <p class="mt-3 text-titanium-400 text-sm leading-relaxed">
+              pii-scrub processes payloads strictly through kernel streaming buffers. Memory pages are locked in volatile RAM using <code class="text-xs bg-white/5 text-titanium-300 px-1.5 py-0.5 rounded font-mono">mlock()</code> to guarantee zero plaintext pages ever swap to unencrypted physical disk sectors.
+            </p>
+
+            <!-- Visual Graphic: RAM vs Disk Barrier -->
+            <div class="mt-6 p-4 rounded-xl bg-obsidian-950 border border-white/[0.06] grid grid-cols-2 gap-4 text-xs font-mono">
+              <div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                  <i data-lucide="cpu" class="w-4 h-4"></i>
+                  <span>Volatile CPU Heap</span>
+                </div>
+                <div class="text-[11px] text-titanium-400 mt-2">Allocated $\rightarrow$ Processed $\rightarrow$ Zeroed</div>
+                <div class="text-[10px] text-emerald-400 mt-1 font-semibold">Active: &lt; 28 MB RAM</div>
+              </div>
+
+              <div class="p-3 rounded-lg bg-rose-500/5 border border-rose-500/20 opacity-80">
+                <div class="flex items-center gap-2 text-rose-400 font-bold">
+                  <i data-lucide="ban" class="w-4 h-4"></i>
+                  <span>Physical Storage Disk</span>
+                </div>
+                <div class="text-[11px] text-titanium-400 mt-2">Zero swap files created</div>
+                <div class="text-[10px] text-rose-400 mt-1 font-semibold">Hard Block: 0 Bytes Written</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-white/[0.06] flex items-center gap-6 text-xs font-mono text-titanium-400">
+            <span class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Zero disk writes</span>
+            <span class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Instant buffer zeroization</span>
+          </div>
+        </div>
+
+        <!-- Bento 2: Air-Gapped Licensing -->
+        <div class="luxury-card rounded-2xl p-8 flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-6">
+              <i data-lucide="lock" class="w-6 h-6 text-emerald-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white tracking-tight">Air-Gapped Ed25519 Security</h3>
+            <p class="mt-3 text-titanium-400 text-sm leading-relaxed">
+              Commercial licenses are validated purely through asymmetric cryptography. Zero phone-home network calls, zero telemetry tracking, and 100% compliant with private banking and defense VPC requirements.
+            </p>
+
+            <div class="mt-6 p-4 rounded-xl bg-obsidian-950 border border-white/[0.06] font-mono text-[11px] text-titanium-400">
+              <div class="flex items-center justify-between text-white font-bold mb-2">
+                <span>Cryptographic Proof</span>
+                <span class="text-emerald-400">Ed25519</span>
+              </div>
+              <div class="truncate text-[10px] text-titanium-500">PUBKEY: f1IiTvSXXpykRX6EBP1O...</div>
+              <div class="text-emerald-400 text-[10px] mt-1">✓ Signature Verified in RAM</div>
+            </div>
+          </div>
+          <div class="mt-8 pt-6 border-t border-white/[0.06] text-xs font-mono text-titanium-400">
+            <span class="text-emerald-400 font-semibold">100% Offline Assurance</span>
+          </div>
+        </div>
+
+        <!-- Bento 3: MOD-10 Luhn Validation -->
+        <div class="luxury-card rounded-2xl p-8 flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-6">
+              <i data-lucide="check-check" class="w-6 h-6 text-emerald-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white tracking-tight">Algorithmic Luhn Checks</h3>
+            <p class="mt-3 text-titanium-400 text-sm leading-relaxed">
+              Eliminates false positives by running candidate credit card matches through MOD-10 checksum validation. Non-card 16-digit tracking IDs, phone numbers, and orders remain untouched.
+            </p>
+          </div>
+          <div class="mt-8 pt-6 border-t border-white/[0.06] text-xs font-mono text-titanium-400">
+            <span>Zero corrupted order IDs</span>
+          </div>
+        </div>
+
+        <!-- Bento 4: Relational Join Preservation -->
+        <div class="luxury-card rounded-2xl p-8 flex flex-col justify-between md:col-span-2">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center mb-6">
+              <i data-lucide="git-merge" class="w-6 h-6 text-emerald-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white tracking-tight">Format-Preserving Deterministic Pseudonymization</h3>
+            <p class="mt-3 text-titanium-400 text-sm leading-relaxed">
+              Instead of naive <code class="text-xs bg-white/5 text-titanium-300 px-1 py-0.5 rounded font-mono">[REDACTED]</code> strings that crash staging database imports with <code class="text-xs bg-rose-500/10 text-rose-400 px-1 py-0.5 rounded font-mono">UNIQUE constraint failed</code>, pii-scrub produces structurally compliant synthetic data (<code class="text-xs bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded font-mono">user_809301de@synthetic.local</code>) that passes database constraints and preserves table foreign-key joins.
+            </p>
+          </div>
+          <div class="mt-8 pt-6 border-t border-white/[0.06] flex items-center gap-6 text-xs font-mono text-titanium-400">
+            <span class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Foreign keys preserved</span>
+            <span class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> No central mapping table</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Developer FAQ Accordion -->
+    <section id="faq" class="py-20 px-6 max-w-4xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] text-xs font-mono font-semibold text-titanium-300 mb-4 border border-white/10">
+          <i data-lucide="help-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+          TECHNICAL INQUIRIES
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          Frequently Answered Questions
+        </h2>
+        <p class="mt-3 text-titanium-400 text-sm">
+          Everything engineers and compliance officers ask before deploying pii-scrub.
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        
+        <div class="luxury-card rounded-xl p-6 cursor-pointer" onclick="toggleFaq(1)">
+          <div class="flex items-center justify-between">
+            <h4 class="text-base font-bold text-white tracking-tight">Can this run inside completely air-gapped, isolated VPC environments?</h4>
+            <i id="faq-icon-1" data-lucide="chevron-down" class="w-5 h-5 text-titanium-400 transition transform"></i>
+          </div>
+          <div id="faq-content-1" class="hidden mt-4 text-xs sm:text-sm text-titanium-400 leading-relaxed border-t border-white/[0.06] pt-4 font-normal">
+            Yes. pii-scrub makes <strong class="text-white">zero outbound network calls</strong>. Commercial licenses are verified completely offline using asymmetric Ed25519 cryptography embedded inside the binary. It runs cleanly inside isolated subnets, bastion hosts, and air-gapped government/banking VPCs with no external internet connection required.
+          </div>
+        </div>
+
+        <div class="luxury-card rounded-xl p-6 cursor-pointer" onclick="toggleFaq(2)">
+          <div class="flex items-center justify-between">
+            <h4 class="text-base font-bold text-white tracking-tight">Will this break database UNIQUE constraints or FOREIGN KEY relationships?</h4>
+            <i id="faq-icon-2" data-lucide="chevron-down" class="w-5 h-5 text-titanium-400 transition transform"></i>
+          </div>
+          <div id="faq-content-2" class="hidden mt-4 text-xs sm:text-sm text-titanium-400 leading-relaxed border-t border-white/[0.06] pt-4 font-normal">
+            No. Unlike naive open-source tools that replace sensitive data with generic placeholders like <code class="text-white bg-white/5 px-1 py-0.5 rounded font-mono">[EMAIL]</code> (which crashes databases on the second customer record), our Commercial Pro tier uses format-preserving deterministic pseudonymization. Each unique customer receives a unique synthetic email (<code class="text-emerald-400 font-mono">user_3d13df0f@synthetic.local</code>) that is consistently replicated across all foreign key tables without needing a central mapping database.
+          </div>
+        </div>
+
+        <div class="luxury-card rounded-xl p-6 cursor-pointer" onclick="toggleFaq(3)">
+          <div class="flex items-center justify-between">
+            <h4 class="text-base font-bold text-white tracking-tight">How is the commercial license activated in automated CI/CD pipelines?</h4>
+            <i id="faq-icon-3" data-lucide="chevron-down" class="w-5 h-5 text-titanium-400 transition transform"></i>
+          </div>
+          <div id="faq-content-3" class="hidden mt-4 text-xs sm:text-sm text-titanium-400 leading-relaxed border-t border-white/[0.06] pt-4 font-normal">
+            Simply add your license key string to your CI/CD repository secrets (e.g. <code class="text-white font-mono">PII_SCRUB_LICENSE</code> in GitHub Actions, GitLab CI, or Kubernetes secrets). The Docker container and CLI automatically detect the environment variable upon launch. No license files need to be copied into container layers.
+          </div>
+        </div>
+
+        <div class="luxury-card rounded-xl p-6 cursor-pointer" onclick="toggleFaq(4)">
+          <div class="flex items-center justify-between">
+            <h4 class="text-base font-bold text-white tracking-tight">What is the corporate refund policy and how do I expense this?</h4>
+            <i id="faq-icon-4" data-lucide="chevron-down" class="w-5 h-5 text-titanium-400 transition transform"></i>
+          </div>
+          <div id="faq-content-4" class="hidden mt-4 text-xs sm:text-sm text-titanium-400 leading-relaxed border-t border-white/[0.06] pt-4 font-normal">
+            We offer a full <strong class="text-white">14-day money-back guarantee</strong> if pii-scrub does not fit into your staging workflow. Payouts are handled through Lemon Squeezy (Merchant of Record), providing automated itemized VAT/Sales tax receipts, W-8BEN compliance, and immediate PDF invoice downloads suitable for corporate credit card expense reporting.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Pricing Section with Centurion Card -->
+    <section id="pricing" class="py-24 px-6 max-w-6xl mx-auto">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tighter text-white">
+          Transparent Corporate Licensing
+        </h2>
+        <p class="mt-4 text-titanium-400 text-sm sm:text-base leading-relaxed">
+          No seat caps, no volume meters, and zero sales calls. Issue your offline license key immediately upon checkout.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
+        
+        <!-- Open Source Community Tier -->
+        <div class="luxury-card rounded-3xl p-8 sm:p-10 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-bold text-white tracking-tight">Community</h3>
+              <span class="text-[10px] font-mono uppercase tracking-widest bg-white/[0.04] text-titanium-400 px-3 py-1 rounded-full border border-white/10 font-bold">Open Core</span>
+            </div>
+            <p class="mt-3 text-titanium-400 text-sm">Free forever for basic log masking and personal testing.</p>
+
+            <div class="mt-8 flex items-baseline gap-1">
+              <span class="text-4xl sm:text-5xl font-extrabold text-white font-mono tracking-tight">$0</span>
+              <span class="text-titanium-500 text-sm font-medium">/ forever</span>
+            </div>
+
+            <ul class="mt-8 space-y-3.5 text-xs text-titanium-300">
+              <li class="flex items-center gap-3">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Unlimited streaming throughput</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Standard masking (<code class="text-white bg-white/5 px-1 py-0.5 rounded font-mono">[EMAIL]</code>, <code class="text-white bg-white/5 px-1 py-0.5 rounded font-mono">[CARD]</code>)</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Algorithmic MOD-10 Luhn check</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Docker & CLI binary distribution</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-10">
+            <a href="https://github.com/jeremy-data876/pii-scrub" target="_blank" rel="noopener noreferrer" 
+               class="w-full block text-center bg-white/[0.04] hover:bg-white/[0.08] text-white font-semibold py-3.5 rounded-xl border border-white/10 transition text-xs uppercase tracking-wider">
+              Download Open Source
+            </a>
+          </div>
+        </div>
+
+        <!-- Commercial Pro License (The Centurion Card) -->
+        <div class="luxury-card rounded-3xl p-8 sm:p-10 flex flex-col justify-between relative border-2 border-emerald-500/60 shadow-2xl">
+          
+          <div class="absolute -top-3.5 right-8 bg-gradient-to-r from-emerald-500 to-emerald-400 text-obsidian-950 font-extrabold text-[10px] uppercase tracking-widest px-3.5 py-1 rounded-full shadow-lg">
+            Commercial Staging Standard
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-bold text-white tracking-tight">Commercial Pro</h3>
+              <span class="text-[10px] font-mono uppercase tracking-widest bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/25 font-bold">Air-Gapped</span>
+            </div>
+            <p class="mt-3 text-titanium-400 text-sm">Everything required for staging database restores & SOC 2 compliance.</p>
+
+            <div class="mt-8 flex items-baseline gap-1">
+              <span class="text-4xl sm:text-5xl font-extrabold text-white font-mono tracking-tight">$299</span>
+              <span class="text-titanium-500 text-sm font-medium">/ year per team</span>
+            </div>
+
+            <ul class="mt-8 space-y-3.5 text-xs text-white">
+              <li class="flex items-center gap-3 font-semibold">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span class="text-emerald-300">Format-Preserving Synthetic Mode</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Relational join & UNIQUE constraint safety</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>JSON Lines (<code class="bg-white/10 px-1 py-0.5 rounded font-mono">.jsonl</code>) LLM fine-tuning support</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Targeted CSV warehouse column filters</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Asymmetric Ed25519 offline license key</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                <span>Priority integration & pipeline assistance</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-10">
+            <a href="https://piiscrub.lemonsqueezy.com" target="_blank" rel="noopener noreferrer" 
+               class="w-full block text-center bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-obsidian-950 font-bold py-4 rounded-xl transition duration-200 shadow-xl shadow-emerald-500/25 text-xs uppercase tracking-wider active:scale-95">
+              Acquire License ($299/yr)
+            </a>
+            <div class="flex items-center justify-center gap-2 mt-3 text-[11px] text-titanium-500 font-mono">
+              <i data-lucide="file-text" class="w-3 h-3 text-emerald-400"></i>
+              <span>Instant Tax Invoice • W-8BEN Compliant • 14-Day Guarantee</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Luxury Footer -->
+    <footer class="border-t border-white/[0.08] py-14 px-6 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-titanium-500 gap-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+          <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i>
+        </div>
+        <span class="font-mono">pii-scrub © 2026. Built for zero data retention.</span>
+      </div>
+      <div class="flex items-center space-x-8 font-mono text-xs">
+        <a href="https://github.com/jeremy-data876/pii-scrub" class="hover:text-white transition">GitHub Repo</a>
+        <a href="#pipeline" class="hover:text-white transition">Pipeline Schematic</a>
+        <a href="#coverage" class="hover:text-white transition">Coverage Matrix</a>
+        <a href="https://piiscrub.lemonsqueezy.com" class="hover:text-white transition">Lemon Squeezy Store</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Interactive JavaScript Engine -->
+  <script>
+    lucide.createIcons();
+
+    // Client-side quick deterministic hash
+    function quickHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(16).padStart(8, '0').slice(0, 8);
+    }
+
+    // Client-side Luhn Algorithm
+    function isValidLuhn(str) {
+      const clean = str.replace(/\D/g, '');
+      if (clean.length < 13 || clean.length > 19) return false;
+      let sum = 0;
+      let alternate = false;
+      for (let i = clean.length - 1; i >= 0; i--) {
+        let n = parseInt(clean.charAt(i), 10);
+        if (alternate) {
+          n *= 2;
+          if (n > 9) n -= 9;
+        }
+        sum += n;
+        alternate = !alternate;
+      }
+      return (sum % 10 === 0);
+    }
+
+    // Live Scrub Engine with HTML highlighted tokens
+    function runStudioScrub() {
+      const start = performance.now();
+      const input = document.getElementById('rawInput').value;
+
+      const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+      const ssnRegex = /\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b/g;
+      const phoneRegex = /(?:\+?1[-. ]?)?\(?([2-9]\d{2})\)?[-. ]?([2-9]\d{2})[-. ]?(\d{4})\b/g;
+      const cardRegex = /\b(?:\d[ -]*?){13,19}\b/g;
+
+      let safeText = input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      safeText = safeText.replace(emailRegex, (m) => `<span class="highlight-token">user_${quickHash(m)}@synthetic.local</span>`);
+      safeText = safeText.replace(phoneRegex, (m) => `<span class="highlight-token">555-01${parseInt(quickHash(m), 16) % 100}</span>`);
+      safeText = safeText.replace(ssnRegex, (m) => `<span class="highlight-token">000-12-${String(parseInt(quickHash(m), 16) % 10000).padStart(4, '0')}</span>`);
+      safeText = safeText.replace(cardRegex, (m) => {
+        if (isValidLuhn(m)) {
+          const last4 = String(parseInt(quickHash(m), 16) % 10000).padStart(4, '0');
+          return `<span class="highlight-token">4000-0000-0000-${last4}</span>`;
+        }
+        return m;
+      });
+
+      document.getElementById('sanitizedOutput').innerHTML = safeText;
+      const elapsed = (performance.now() - start).toFixed(2);
+      document.getElementById('speedStat').textContent = `Latency: ${elapsed} ms`;
+    }
+
+    // Preset Data
+    const presets = {
+      sql: `INSERT INTO customers VALUES (101, 'Alice Smith', 'alice.smith@enterprise.gov', '202-555-0144', '042-89-1234');\nINSERT INTO orders VALUES (5001, 'alice.smith@enterprise.gov', '4242-4242-4242-4242', 129.50);\nINSERT INTO tracking VALUES (4402, 'Ref: 9988776655443322 (not a valid card)', 'Order confirmed');`,
+      jsonl: `{"id": "doc_101", "role": "user", "prompt": "My email is bob@acme.corp, phone is 415-555-0199."}\n{"id": "doc_102", "role": "assistant", "response": "Refund issued for card 4111-1111-1111-1111."}`,
+      csv: `customer_id,name,email,card_number,balance\nc_501,Carol White,carol.w@fintech.co,4000-1234-5678-9010,850.00\nc_502,Dan Miller,dan.m@cloud.io,4242-4242-4242-4242,120.00`
+    };
+
+    function loadPreset(type) {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('bg-white/10', 'text-white', 'border-white/20');
+        btn.classList.add('bg-obsidian-850', 'text-titanium-400', 'border-white/10');
+      });
+      const activeBtn = document.getElementById(`preset-${type}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white/10', 'text-white', 'border-white/20');
+        activeBtn.classList.remove('text-titanium-400');
+      }
+      document.getElementById('rawInput').value = presets[type];
+      runStudioScrub();
+    }
+
+    function copyStudioOutput() {
+      const text = document.getElementById('sanitizedOutput').innerText;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyStudioText');
+      btn.textContent = "Copied to Clipboard!";
+      setTimeout(() => btn.textContent = "Copy Clean Stream", 2000);
+    }
+
+    // Recipe Switcher
+    const recipes = {
+      postgres: {
+        comment: "# Stream PostgreSQL dump directly into sanitized staging SQL (Zero Disk Persistence)",
+        command: "pg_dump -Fc prod_db | docker run -i --rm ghcr.io/jeremy-data876/pii-scrub:v1 --mode synthetic > staging.sql"
+      },
+      mysql: {
+        comment: "# Stream MySQL / MariaDB dump directly into sanitized staging SQL",
+        command: "mysqldump -u root prod_db | docker run -i --rm ghcr.io/jeremy-data876/pii-scrub:v1 --mode synthetic > staging.sql"
+      },
+      llm: {
+        comment: "# Sanitize LLM fine-tuning prompts without breaking JSON syntax or quote escaping",
+        command: "cat dirty_prompts.jsonl | docker run -i --rm ghcr.io/jeremy-data876/pii-scrub:v1 --format jsonl > clean_prompts.jsonl"
+      },
+      csv: {
+        comment: "# Target specific warehouse columns from Snowflake, Redshift, or BigQuery CSV dumps",
+        command: "cat export.csv | docker run -i --rm ghcr.io/jeremy-data876/pii-scrub:v1 --format csv --columns email,card > clean.csv"
+      }
+    };
+
+    let activeRecipeKey = 'postgres';
+
+    function switchRecipe(key) {
+      activeRecipeKey = key;
+      document.querySelectorAll('.recipe-tab').forEach(tab => {
+        tab.classList.remove('bg-white/10', 'text-white');
+        tab.classList.add('text-titanium-400');
+      });
+      document.getElementById(`tab-${key}`).classList.add('bg-white/10', 'text-white');
+      document.getElementById(`tab-${key}`).classList.remove('text-titanium-400');
+
+      const data = recipes[key];
+      document.getElementById('recipe-text').innerHTML = `
+        <span class="text-titanium-500">${data.comment}</span><br>
+        <span class="text-emerald-400">${data.command}</span>
+      `;
+    }
+
+    function copyRecipeCommand() {
+      const cmd = recipes[activeRecipeKey].command;
+      navigator.clipboard.writeText(cmd);
+      const btn = document.getElementById('copyRecipeBtn');
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = "Copy Command", 2000);
+    }
+
+    // FAQ Accordion Toggle
+    function toggleFaq(index) {
+      const content = document.getElementById(`faq-content-${index}`);
+      const icon = document.getElementById(`faq-icon-${index}`);
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180', 'text-emerald-400');
+      } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180', 'text-emerald-400');
+      }
+    }
+
+    // VISUAL ASSET 2: Interactive Database Table Diff Renderer
+    const rawRows = [
+      { id: 101, name: "Alice Smith", email: "alice.smith@enterprise.gov", phone: "(202) 555-0144", card: "4242-4242-4242-4242", ssn: "042-89-1234", orders: "Order #5001, #5002" },
+      { id: 102, name: "Bob Jones", email: "bob.jones@healthnet.org", phone: "(415) 555-0199", card: "4000-1234-5678-9010", ssn: "123-45-6789", orders: "Order #5003" },
+      { id: 103, name: "Carol White", email: "carol.w@fintech.co", phone: "(312) 555-0112", card: "4111-1111-1111-1111", ssn: "987-65-4321", orders: "Order #5004" }
+    ];
+
+    const syntheticRows = [
+      { id: 101, name: "Alice Smith", email: "user_3d13df0f@synthetic.local", phone: "555-0195", card: "4000-0000-0000-4411", ssn: "000-12-9836", orders: "Order #5001, #5002 (Linked)" },
+      { id: 102, name: "Bob Jones", email: "user_5a01860a@synthetic.local", phone: "555-0103", card: "4000-1234-5678-9010", ssn: "000-12-1303", orders: "Order #5003 (Linked)" },
+      { id: 103, name: "Carol White", email: "user_c4b4c929@synthetic.local", phone: "555-0169", card: "4000-0000-0000-8665", ssn: "000-12-4412", orders: "Order #5004 (Linked)" }
+    ];
+
+    function setTableMode(mode) {
+      const btnRaw = document.getElementById('btn-tbl-raw');
+      const btnSyn = document.getElementById('btn-tbl-synthetic');
+      const statusTag = document.getElementById('tableStatusTag');
+      const tbody = document.getElementById('interactiveTableBody');
+
+      let rows = [];
+      if (mode === 'raw') {
+        btnRaw.className = "px-5 py-2 rounded-lg text-xs font-mono font-bold transition bg-rose-500 text-white shadow-md";
+        btnSyn.className = "px-5 py-2 rounded-lg text-xs font-mono font-bold transition text-titanium-400 hover:text-white";
+        statusTag.textContent = "CRITICAL: Live Sensitive PII Detected (Breaches SOC 2 / HIPAA in Staging)";
+        statusTag.className = "text-[10px] font-mono uppercase tracking-wider bg-rose-500/10 text-rose-400 px-2.5 py-1 rounded border border-rose-500/20 font-bold";
+        rows = rawRows;
+      } else {
+        btnSyn.className = "px-5 py-2 rounded-lg text-xs font-mono font-bold transition bg-emerald-500 text-obsidian-950 shadow-md";
+        btnRaw.className = "px-5 py-2 rounded-lg text-xs font-mono font-bold transition text-titanium-400 hover:text-white";
+        statusTag.textContent = "Schema Validated • Foreign Keys Intact • 100% Synthetic";
+        statusTag.className = "text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded border border-emerald-500/20 font-bold";
+        rows = syntheticRows;
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-white/[0.02] transition">
+          <td class="p-4 font-bold text-white">${r.id}</td>
+          <td class="p-4">${r.name}</td>
+          <td class="p-4 ${mode === 'synthetic' ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">${r.email}</td>
+          <td class="p-4 ${mode === 'synthetic' ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">${r.phone}</td>
+          <td class="p-4 ${mode === 'synthetic' ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">${r.card}</td>
+          <td class="p-4 ${mode === 'synthetic' ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">${r.ssn}</td>
+          <td class="p-4 ${mode === 'synthetic' ? 'text-emerald-300 font-bold' : 'text-titanium-400'}">${r.orders}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Initialize on load
+    loadPreset('sql');
+    setTableMode('synthetic');
+  </script>
+</body>
+</html>
